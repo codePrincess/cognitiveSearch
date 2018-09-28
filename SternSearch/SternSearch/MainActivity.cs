@@ -44,7 +44,7 @@ namespace SternSearch
             currentSearchResults = new List<List<string>>();
 
             httpClient = new HttpClient();
-            string api_key = "7948644A316B48A1F037F04915E4BA3A";
+            string api_key = "xxx";
             httpClient.DefaultRequestHeaders.Add("api-key", api_key);
 
             // Get our button from the layout resource,
