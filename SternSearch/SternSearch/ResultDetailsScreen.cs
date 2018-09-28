@@ -39,14 +39,14 @@ namespace SternSearch
             myListAdapter = new ArrayAdapter(this, Android.Resource.Layout.SimpleListItem1, result);
             resultList.Adapter = myListAdapter;
             resultList.ItemClick += (s, e) => {
-                if (e.Position <= result.Count)
-                {
-                    var t = result[e.Position];
-                    Android.Widget.Toast.MakeText(this, t, Android.Widget.ToastLength.Long).Show();
-                }
+                //if (e.Position <= result.Count)
+                //{
+                //    var t = result[e.Position];
+                //    Android.Widget.Toast.MakeText(this, t, Android.Widget.ToastLength.Long).Show();
+                //}
             };
 
-
+            myListAdapter.Clear();
 
             var receivedData = Intent.GetStringArrayListExtra("data");
             result = new List<string>(receivedData);
