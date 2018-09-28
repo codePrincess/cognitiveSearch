@@ -49,8 +49,11 @@ namespace SternSearch
             myListAdapter.Clear();
 
             var receivedData = Intent.GetStringArrayListExtra("data");
+
             result = new List<string>(receivedData);
+
             myListAdapter.AddAll(result);
+
             RunOnUiThread(() => myListAdapter.NotifyDataSetChanged());
 
         }

@@ -3,6 +3,7 @@ using Android.Widget;
 using Android.OS;
 using Android.Content;
 using Android.Net;
+using Android.Views.InputMethods;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -32,8 +33,6 @@ namespace SternSearch
         ListView resultList;
         ArrayAdapter myListAdapter;
 
-        public Dictionary<string, object> Dic { get; private set; }
-
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -54,10 +53,19 @@ namespace SternSearch
             resultLabel = FindViewById<TextView>(Resource.Id.resultLabel);
             resultList = FindViewById<ListView>(Resource.Id.listView);
 
+            resultLabel.Visibility = Android.Views.ViewStates.Invisible;
+            resultList.Visibility = Android.Views.ViewStates.Invisible;
+
             searchButton.Click += delegate
             {
+                currentSearchResults.Clear();
+                myListAdapter.Clear();
                 currentSearchTerm = searchTextfield.Text;
+
                 StartSearch();
+
+                InputMethodManager imm = (InputMethodManager)GetSystemService(Context.InputMethodService);
+                imm.HideSoftInputFromWindow(searchTextfield.WindowToken, 0);
             };
 
             allSearchResults = new List<String> { "no results yet..." };
@@ -76,6 +84,27 @@ namespace SternSearch
             currentSearchResults.Add(result);
 
             Console.WriteLine("currently added: " + result);
+        }
+
+        private string GetDisplayTextForRawList(string data, string title) {
+            List<String> keyPhrases = JsonConvert.DeserializeObject<List<String>>(data.ToString());
+            int count = 0;
+            string displayString = "\n" + title + "\n\n";
+            foreach (string kp in keyPhrases)
+            {
+                if (count != 0)
+                {
+                    displayString = displayString + ", " + kp;
+                }
+                else
+                {
+                    displayString = displayString + kp;
+                }
+
+                count++;
+            }
+
+            return displayString + "\n";
         }
 
 
@@ -97,8 +126,19 @@ namespace SternSearch
             {
                 if (item.Key == "value")
                 {
-                    resultLabel.Text = "Results for " + currentSearchTerm;
+                    resultLabel.Visibility = Android.Views.ViewStates.Visible;
+                    resultList.Visibility = Android.Views.ViewStates.Visible;
+
+                    resultLabel.Text = ((JArray)item.Value).Count + " results for " + currentSearchTerm;
                     List<string> persistResults = new List<string>();
+
+                    if (item.Value == null || ((JArray)item.Value).Count == 0)
+                    {
+                        myListAdapter.Clear();
+                        myListAdapter.Add("no results found :(");
+                        myListAdapter.NotifyDataSetChanged();
+                        return;
+                    }
 
                     foreach (var result in (JArray)item.Value)
                     {
@@ -110,13 +150,43 @@ namespace SternSearch
                         myListAdapter.Add(titleValPrefix + "..." + titleValPostfix);
 
                         var keyPhrasesField = result["keyphrases"];
-                        persistResults.Add(keyPhrasesField.ToString());
+                        string text = this.GetDisplayTextForRawList(keyPhrasesField.ToString(), "Keyphrases: ");
+                        persistResults.Add(text);
 
                         var imagetagField = result["imageTags"];
-                        persistResults.Add(imagetagField.ToString());
+                        text = this.GetDisplayTextForRawList(imagetagField.ToString(), "Image Tags: ");
+                        persistResults.Add(text);
+
+                        var peopleField = result["people"];
+                        text = this.GetDisplayTextForRawList(peopleField.ToString(), "People: ");
+                        persistResults.Add(text);
+
+                        var locationsField = result["locations"];
+                        text = this.GetDisplayTextForRawList(locationsField.ToString(), "Locations: ");
+                        persistResults.Add(text);
+
 
                         var imageCaptionField = result["imageCaption"];
-                        persistResults.Add(imageCaptionField.ToString());
+                        List<object> imageCaptions = JsonConvert.DeserializeObject<List<object>>(imageCaptionField.ToString());
+                        string imageCaptionString = "\nImage Captions: \n";
+
+                        foreach (var dict in imageCaptions)
+                        {
+                            Dictionary<string, object> realDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(dict.ToString());
+                            var captions = realDict["captions"];
+
+                            List<Dictionary<string, object>> captionVals = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(captions.ToString());
+                            if (captionVals != null && captionVals.Count > 0)
+                            {
+                                var caption = captionVals[0];
+                                var captionText = caption["text"];
+
+                                imageCaptionString = imageCaptionString + "\n -> " + captionText;
+                            }
+
+                        }
+
+                        persistResults.Add(imageCaptionString + "\n");
 
                         this.saveSearchResult(persistResults);
                     }
