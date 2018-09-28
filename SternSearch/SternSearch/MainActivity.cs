@@ -43,7 +43,7 @@ namespace SternSearch
             currentSearchResults = new List<List<string>>();
 
             httpClient = new HttpClient();
-            string api_key = "xxx";
+            string api_key = "XXX";
             httpClient.DefaultRequestHeaders.Add("api-key", api_key);
 
             // Get our button from the layout resource,
@@ -112,7 +112,7 @@ namespace SternSearch
         {
             myListAdapter.Clear();
 
-            string Base_URL = "https://<yourServiceName>.search.windows.net";
+            string Base_URL = "https://<YourAppName>.search.windows.net";
             string Index_URL = "/indexes/azureblob-index/docs";
             string Query = "?api-version=2017-11-11&search=";
 
@@ -140,14 +140,15 @@ namespace SternSearch
                         return;
                     }
 
+                    int count = 0;
                     foreach (var result in (JArray)item.Value)
                     {
                         persistResults.Clear();
 
                         string storage_path = result["metadata_storage_path"].ToString();
-                        string titleValPrefix = storage_path.Substring(0, 15);
-                        string titleValPostfix = storage_path.Substring(storage_path.Length - 15, 15);
-                        myListAdapter.Add(titleValPrefix + "..." + titleValPostfix);
+                        string titleValPrefix = storage_path.Substring(0, 10);
+                        string titleValPostfix = storage_path.Substring(storage_path.Length - 10, 10);
+                        myListAdapter.Add("#" + count + " - "+ titleValPrefix + "..." + titleValPostfix);
 
                         var keyPhrasesField = result["keyphrases"];
                         string text = this.GetDisplayTextForRawList(keyPhrasesField.ToString(), "Keyphrases: ");
@@ -189,6 +190,8 @@ namespace SternSearch
                         persistResults.Add(imageCaptionString + "\n");
 
                         this.saveSearchResult(persistResults);
+
+                        count++;
                     }
                 }
             }
